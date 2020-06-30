@@ -203,6 +203,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ble_low_energy" />
+
+            <CheckBox
+                android:id="@+id/internalCB"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="internal" />
         </LinearLayout>
 
 

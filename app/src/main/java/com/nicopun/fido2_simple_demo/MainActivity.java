@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     EditText userName, displayName, pubkeyId, timeout1, timeout2, rpId;
     TextView registerResult, signResult;
     RadioButton platformRB, cross_platformRB, noneRB, indirectRB, directRB;
-    CheckBox usbCB, nfcCB, ble_classicCB, ble_low_energyCB;
+    CheckBox usbCB, nfcCB, ble_classicCB, ble_low_energyCB, internalCB;
     Activity activity = this;
 
     @Override
@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         nfcCB = findViewById(R.id.nfcCB);
         ble_classicCB = findViewById(R.id.ble_classicCB);
         ble_low_energyCB = findViewById(R.id.ble_low_energyCB);
+        internalCB = findViewById(R.id.internalCB);
     }
 
     @Override
@@ -383,8 +384,7 @@ public class MainActivity extends AppCompatActivity {
         if (nfcCB.isChecked()) transports.add(Transport.NFC);
         if (ble_classicCB.isChecked()) transports.add(Transport.BLUETOOTH_CLASSIC);
         if (ble_low_energyCB.isChecked()) transports.add(Transport.BLUETOOTH_LOW_ENERGY);
-        if (transports.isEmpty())
-            transports.add(Transport.INTERNAL);
+        if (internalCB.isChecked()) transports.add(Transport.INTERNAL);
 
 
         PublicKeyCredentialRequestOptions.Builder optionsBuilder = new PublicKeyCredentialRequestOptions.Builder()
