@@ -1,12 +1,13 @@
 package com.nicopun.fido2_simple_demo;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -22,6 +23,7 @@ import com.google.android.gms.fido.fido2.Fido2ApiClient;
 import com.google.android.gms.fido.fido2.Fido2PendingIntent;
 import com.google.android.gms.fido.fido2.api.common.Attachment;
 import com.google.android.gms.fido.fido2.api.common.AttestationConveyancePreference;
+import com.google.android.gms.fido.fido2.api.common.AuthenticationExtensions;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse;
@@ -35,6 +37,8 @@ import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRpEntity;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialType;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialUserEntity;
 import com.google.android.gms.fido.fido2.api.common.RSAAlgorithm;
+import com.google.android.gms.fido.fido2.api.common.UserVerificationMethodExtension;
+import com.google.android.gms.fido.fido2.api.common.UserVerificationMethods;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -137,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
                 b64KeyHandle = Base64.encodeToString(attestationResponse.getKeyHandle(), Base64.DEFAULT);
                 clientDataJson = new String(attestationResponse.getClientDataJSON(), UTF_8);
                 b64AttestationObject = Base64.encodeToString(attestationResponse.getAttestationObject(), Base64.DEFAULT);
-
 
                 // store keyHandle
                 pubkeyId.setText(b64KeyHandle);
@@ -327,18 +330,25 @@ public class MainActivity extends AppCompatActivity {
         if (!timeout1.getText().toString().matches(""))
             optionsBuilder.setTimeoutSeconds(Double.parseDouble(timeout1.getText().toString()));
 
+
         PublicKeyCredentialCreationOptions options = optionsBuilder.build();
 
         Fido2ApiClient fido2ApiClient = Fido.getFido2ApiClient(getApplicationContext());
-        Task<Fido2PendingIntent> result = fido2ApiClient.getRegisterIntent(options);
-        result.addOnSuccessListener(new OnSuccessListener<Fido2PendingIntent>() {
+        Task<PendingIntent> result = fido2ApiClient.getRegisterPendingIntent(options);
+        result.addOnSuccessListener(new OnSuccessListener<PendingIntent>() {
             @Override
-            public void onSuccess(Fido2PendingIntent fido2PendingIntent) {
-                if (fido2PendingIntent.hasPendingIntent()) {
+            public void onSuccess(PendingIntent pendingIntent) {
+                if (pendingIntent != null) {
                     try {
-                        fido2PendingIntent.launchPendingIntent(activity, REGISTER_REQUEST_CODE);
+                        startIntentSenderForResult(
+                                pendingIntent.getIntentSender(),
+                                REGISTER_REQUEST_CODE,
+                                null,
+                                0,
+                                0,
+                                0
+                        );
                     } catch (IntentSender.SendIntentException e) {
-                        Log.d(LOG_TAG, "onSuccess: Exception");
                         e.printStackTrace();
                     }
                 }
@@ -373,6 +383,8 @@ public class MainActivity extends AppCompatActivity {
         if (nfcCB.isChecked()) transports.add(Transport.NFC);
         if (ble_classicCB.isChecked()) transports.add(Transport.BLUETOOTH_CLASSIC);
         if (ble_low_energyCB.isChecked()) transports.add(Transport.BLUETOOTH_LOW_ENERGY);
+        if (transports.isEmpty())
+            transports.add(Transport.INTERNAL);
 
 
         PublicKeyCredentialRequestOptions.Builder optionsBuilder = new PublicKeyCredentialRequestOptions.Builder()
@@ -397,14 +409,28 @@ public class MainActivity extends AppCompatActivity {
         PublicKeyCredentialRequestOptions options = optionsBuilder.build();
 
         Fido2ApiClient fido2ApiClient = Fido.getFido2ApiClient(getApplicationContext());
-        Task<Fido2PendingIntent> result = fido2ApiClient.getSignIntent(options);
-
-        result.addOnSuccessListener(new OnSuccessListener<Fido2PendingIntent>() {
+        Task<Boolean> isAvailable = fido2ApiClient.isUserVerifyingPlatformAuthenticatorAvailable();
+        isAvailable.addOnSuccessListener(new OnSuccessListener<Boolean>() {
             @Override
-            public void onSuccess(Fido2PendingIntent fido2PendingIntent) {
-                if (fido2PendingIntent.hasPendingIntent()) {
+            public void onSuccess(Boolean aBoolean) {
+                Log.d(LOG_TAG, "isUserVerifyingPlatformAuthenticatorAvailable: " + aBoolean);
+            }
+        });
+        Task<PendingIntent> result = fido2ApiClient.getSignPendingIntent(options);
+
+        result.addOnSuccessListener(new OnSuccessListener<PendingIntent>() {
+            @Override
+            public void onSuccess(PendingIntent pendingIntent) {
+                if (pendingIntent != null) {
                     try {
-                        fido2PendingIntent.launchPendingIntent(activity, SIGN_REQUEST_CODE);
+                        startIntentSenderForResult(
+                                pendingIntent.getIntentSender(),
+                                SIGN_REQUEST_CODE,
+                                null,
+                                0,
+                                0,
+                                0
+                        );
                     } catch (IntentSender.SendIntentException e) {
                         e.printStackTrace();
                     }
