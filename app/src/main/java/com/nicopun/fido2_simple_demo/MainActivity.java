@@ -75,6 +75,8 @@ public class MainActivity extends AppCompatActivity {
     CheckBox usbCB, nfcCB, ble_classicCB, ble_low_energyCB, internalCB;
     Activity activity = this;
 
+    ArrayList<PublicKeyCredentialDescriptor> excludeList = new ArrayList();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -158,6 +160,12 @@ public class MainActivity extends AppCompatActivity {
                         "\n clientDataJson: " + clientDataJson +
                         "\n b64AttestationObject: " + b64AttestationObject +
                         "\n attestationObject:\n" + decodeAttestationObject(attestationResponse.getAttestationObject()));
+
+                excludeList.add(new PublicKeyCredentialDescriptor(
+                        PublicKeyCredentialType.PUBLIC_KEY.toString(),
+                        attestationResponse.getKeyHandle(),
+                        null
+                ));
                 break;
             case SIGN_REQUEST_CODE:
                 Log.d(LOG_TAG, "handleResponse: SIGN_REQUEST_CODE");
@@ -304,7 +312,8 @@ public class MainActivity extends AppCompatActivity {
                         userName.getText().toString(),
                         null,
                         displayName.getText().toString()))
-                .setChallenge(challenge());
+                .setChallenge(challenge())
+                .setExcludeList(excludeList);
 
         // authenticatorAtattachment
         Attachment attachment = null;
